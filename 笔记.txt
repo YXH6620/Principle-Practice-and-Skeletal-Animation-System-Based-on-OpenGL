@@ -21,3 +21,9 @@
 	（1）多个三角形顶点数据是重复的
 	（2）虽然增加了索引空间，但一般顶点数据不止坐标，还有uv、texture等，这样索引的利用效率就极高
 	（3）EBO存储索引信息
+
+5.纹理坐标
+	（1）0-1 纹理坐标UV，因为各图片长宽比例不同。u/v * 长/宽
+	（2）Texture Wrapping：顶点uv坐标超过0-1范围。采取特殊方式
+	（3）Texture filter：uv计算结果为小数，采取特殊方式（nearest，Bi-linear）glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEARSET)
+	（4）uniform sampler2D、texture函数、texture锚点0-15

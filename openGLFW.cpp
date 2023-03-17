@@ -1,8 +1,11 @@
-﻿#incl ude "Base.h"
+﻿#include "Base.h"
 #include "Shader.h"
+#include "ffImage.h"
 
 //Shader
 Shader _shader;
+//Texture
+ffImage* _pImage=nullptr;
 //1）获取VBO index
 unsigned int VBO = 0;
 //VAO index
@@ -18,10 +21,17 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 }
+
+void initTexture()
+{
+    _pImage = ffImage::readFromFile("res/wall.jph");
+}
+
 void	initShader(const char* _vertexPath, const char* _fragPath)
 {
     _shader.initShader(_vertexPath,_fragPath);
 }
+
 void initModel()
 {
     float vertices[] = {
@@ -102,6 +112,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     initModel();
+    initTexture()
     initShader("vertexShader.glsl" , "fragmentShader.glsl");
 
     while (!glfwWindowShouldClose(window))
