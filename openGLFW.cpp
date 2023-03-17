@@ -145,7 +145,7 @@ void rend()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //开启深度检测
     glEnable(GL_DEPTH_TEST);
-
+    //10个移动向量数据（模型矩阵）
     glm::vec3 modelVecs[] = {
         glm::vec3(0.0f,  0.0f,  0.0f),
         glm::vec3(2.0f,  5.0f, -15.0f),
@@ -168,7 +168,9 @@ void rend()
     for (int i = 0; i < 10; i++)
     {
         glm::mat4 _modelMatrix(1.0f);
+        //平移矩阵，右乘
         _modelMatrix = glm::translate(_modelMatrix, modelVecs[i]);
+        //旋转矩阵，右乘
         _modelMatrix = glm::rotate(_modelMatrix, glm::radians((float)glfwGetTime() * (i+1) * 10), glm::vec3(0.0f, 1.0f, 0.0f));
 
         _shader.start();
