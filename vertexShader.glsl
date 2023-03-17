@@ -1,14 +1,16 @@
 #version 330 core
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-layout (location = 2) in vec2 aUV;
+layout (location = 1) in vec2 aUV;
 
-out vec4 outColor;
 out vec2 outUV;
+
+uniform mat4 _modelMatrix;
+uniform mat4 _viewMatrix;
+uniform mat4 _projMatrix;
+
 
 void main()
 {
-   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-   outColor = vec4(aColor , 1.0f);
+   gl_Position = _projMatrix * _viewMatrix * _modelMatrix * vec4(aPos.x, aPos.y, aPos.z, 1.0);
    outUV = aUV;
 };
