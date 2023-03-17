@@ -1,0 +1,6 @@
+1.VBO，在GPU上开一块空间
+	（1）获取VBO index
+	（2）绑定VBO index
+	（3）给VBO分配显存空间 传输数据
+	（4）告诉shader数据解析方式
+	（5）激活锚点

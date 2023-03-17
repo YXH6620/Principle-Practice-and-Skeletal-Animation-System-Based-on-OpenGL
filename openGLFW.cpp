@@ -6,6 +6,7 @@
 #include<string>
 
 unsigned int shaderProgram = 0;
+//1）获取VBO index
 unsigned int VBO = 0;
 unsigned int VAO = 0;
 
@@ -113,10 +114,14 @@ void initModel()
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
+    //（2）绑定VBO index
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //（3）给VBO分配显存空间 传输数据
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    //（4）告诉shader数据解析方式
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    //（5）激活锚点
     glEnableVertexAttribArray(0);
     glBindVertexArray(0); 
 }
