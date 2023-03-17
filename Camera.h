@@ -11,7 +11,6 @@ enum class CAMERA_MOVE
 class Camera
 {
 private:
-	//摄像机三样
 	glm::vec3	m_position;
 	glm::vec3	m_front;
 	glm::vec3	m_up;
@@ -33,9 +32,9 @@ public:
 		m_front = glm::vec3(1.0f);
 		m_up = glm::vec3(1.0f);
 		m_speed = 0.01f;
-		
+
 		m_pitch = 0.0f;
-		m_yaw = -90.0f;//z轴负方向
+		m_yaw = -90.0f;
 		m_sensitivity = 0.1f;
 
 		m_xpos = 0;
@@ -52,6 +51,7 @@ public:
 	void update();
 
 	glm::mat4 getMatrix();
+	glm::vec3 getPosition();
 
 	void	setSpeed(float _speed)
 	{
@@ -60,8 +60,8 @@ public:
 
 	void move(CAMERA_MOVE _mode);
 
-	void pitch(float _yOffset);//上下
-	void yaw(float _xOffset);//左右
+	void pitch(float _yOffset);
+	void yaw(float _xOffset);
 	void setSentitivity(float _s);
 	void onMouseMove(double _xpos , double _ypos);
 };

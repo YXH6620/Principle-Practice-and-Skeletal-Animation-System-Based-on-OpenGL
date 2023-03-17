@@ -3,7 +3,6 @@
 void Camera::lookAt(glm::vec3 _pos, glm::vec3 _front, glm::vec3 _up)
 {
 	m_position = _pos;
-	//单位化
 	m_front = glm::normalize(_front);
 	m_up = _up;
 
@@ -12,7 +11,6 @@ void Camera::lookAt(glm::vec3 _pos, glm::vec3 _front, glm::vec3 _up)
 
 void Camera::update()
 {
-	//刷新
 	m_vMatrix = glm::lookAt(m_position, m_position + m_front, m_up);
 }
 
@@ -21,12 +19,17 @@ glm::mat4 Camera::getMatrix()
 	return m_vMatrix;
 }
 
+glm::vec3 Camera::getPosition()
+{
+	return m_position;
+}
+
+
 void Camera::move(CAMERA_MOVE _mode)
 {
 	switch (_mode)
 	{
 	case CAMERA_MOVE::MOVE_LEFT:
-		//叉乘
 		m_position -= glm::normalize(glm::cross(m_front, m_up)) * m_speed;
 		break;
 	case CAMERA_MOVE::MOVE_RIGHT:
@@ -65,7 +68,6 @@ void Camera::pitch(float _yOffset)
 	m_front = glm::normalize(m_front);
 	update();
 }
-
 void Camera::yaw(float _xOffset)
 {
 	m_yaw += _xOffset * m_sensitivity;
@@ -77,7 +79,6 @@ void Camera::yaw(float _xOffset)
 	m_front = glm::normalize(m_front);
 	update();
 }
-
 void Camera::setSentitivity(float _s)
 {
 	m_sensitivity = _s;

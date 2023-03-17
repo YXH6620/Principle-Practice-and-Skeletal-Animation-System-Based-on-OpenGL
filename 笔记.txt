@@ -27,3 +27,14 @@
 	（2）Texture Wrapping：顶点uv坐标超过0-1范围。采取特殊方式
 	（3）Texture filter：uv计算结果为小数，采取特殊方式（nearest，Bi-linear）glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEARSET)
 	（4）uniform sampler2D、texture函数、texture锚点0-15
+
+6.光照
+	（1）物体会反色、吸收一定波段的颜色，眼睛接受的是反射的部分。物体颜色即反射光的百分比，即直接相乘
+	（2）数学上的实现
+	（3）phong模型：ambient环境光+diffuse漫反射+specular镜面反射（高光）
+		漫反射：	
+			拉伸变换，
+
+7.材质
+	（1）物体对于某一种光的反射强度
+	（2）材质与纹理：纹理（物体本身最基础的颜色），材质（物体对光的反射属性）

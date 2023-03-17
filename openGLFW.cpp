@@ -3,14 +3,17 @@
 #include "ffImage.h"
 #include "Camera.h"
 
+uint VAO_cube = 0;
+uint VAO_sun = 0;
+glm::vec3 light_pos(1.0f); 
+glm::vec3 light_color(1.0f);
+
 //Shader
-Shader _shader;
+Shader          _shader_cube;
+Shader          _shader_sun;
 //Texture
 ffImage* _pImage=nullptr;
-//1）获取VBO index
-unsigned int VBO = 0;
-//VAO index
-unsigned int VAO = 0;
+
 //Texture index
 unsigned int _texture = 0;
 
@@ -71,95 +74,78 @@ void initTexture()
 
 void	initShader(const char* _vertexPath, const char* _fragPath)
 {
-    _shader.initShader(_vertexPath,_fragPath);
+    _shader_cube.initShader(_vertexPath, _fragPath);
+    _shader_sun.initShader("vsunShader.glsl", "fsunShader.glsl");
 }
 
-void initModel()
+uint createModel()
 {
-    // float vertices[] =
-    // {
-    //     //顶点                //颜色                 //纹理
-    //     0.5f,  0.5f, 0.0f,    1.0f , 0.0f , 0.0f,   1.0f , 1.0f,
-    //     0.5f, -0.5f, 0.0f,    0.0f , 1.0f , 0.0f,   1.0f , 0.0f,
-    //     -0.5f,  -0.5f, 0.0f,  0.0f , 0.0f , 1.0f,   0.0f , 0.0f,
-    //     -0.5f, 0.5f, 0.0f,    0.0f , 1.0f , 0.0f,   0.0f , 1.0f,
-    // };
-
-    // unsigned int indices[] = {
-    //     0,1,3,
-    //     1,2,3
-    // };
+    uint _VAO = 0;
+    uint _VBO = 0;
 
     float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,           0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,           0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,           0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,           0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,           0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,           0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,           0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,           0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           0.0f,  0.0f,  1.0f,
 
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           -1.0f,  0.0f,  0.0f,
 
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,           0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,           0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,           0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,           0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,           0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,           0.0f,  1.0f,  0.0f,
     }; 
 
-    //创建VAO
-    glGenVertexArrays(1, &VAO);
-    //绑定VAO，VBO此时属于VAO的管理范围，管理对应的VBO锚定点
-    glBindVertexArray(VAO);
 
-    // //构建EBO
-    // unsigned int EBO=0;
-    // glGenBuffers(1,&EBO);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glGenVertexArrays(1, &_VAO);
+    glBindVertexArray(_VAO);
 
-    //（2）绑定VBO index
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //（3）给VBO分配显存空间 传输数据
+    glGenBuffers(1, &_VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    //（4）告诉shader数据解析方式
-    //顶点信息，颜色信息，纹理信息，跨度为8
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(sizeof(float) * 3));
-    //（5）激活锚点
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 3));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 5));
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    //解绑VAO
-    glBindVertexArray(0); 
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    return _VAO;
 }
 
 void rend()
@@ -169,42 +155,49 @@ void rend()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //开启深度检测
     glEnable(GL_DEPTH_TEST);
-    //10个移动向量数据（模型矩阵）
-    glm::vec3 modelVecs[] = {
-        glm::vec3(0.0f,  0.0f,  0.0f),
-        glm::vec3(2.0f,  5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3(2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f,  3.0f, -7.5f),
-        glm::vec3(1.3f, -2.0f, -2.5f),
-        glm::vec3(1.5f,  2.0f, -2.5f),
-        glm::vec3(1.5f,  0.2f, -1.5f),
-        glm::vec3(-1.3f,  1.0f, -1.5f)
-    };
-   
+
+
     _camera.update();
-    //投影矩阵
     _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 100.0f);
-
+    glm::mat4 _modelMatrix(1.0f);
+    _modelMatrix = glm::translate(_modelMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
     glBindTexture(GL_TEXTURE_2D, _texture);
+    _shader_cube.start();
+        _shader_cube.setVec3("view_pos", _camera.getPosition());
+        
+        //传入光照属性
+        light_color = glm::vec3((float)glfwGetTime() * 0.8f, (float)glfwGetTime() * 0.5f, (float)glfwGetTime() * 0.7f);
+        _shader_cube.setVec3("myLight.m_ambient" , light_color * glm::vec3(0.1f));
+        _shader_cube.setVec3("myLight.m_diffuse", light_color * glm::vec3(0.7f));
+        _shader_cube.setVec3("myLight.m_specular", light_color * glm::vec3(0.5f));
+        _shader_cube.setVec3("myLight.m_pos", light_pos);
 
-    for (int i = 0; i < 10; i++)
-    {
-        glm::mat4 _modelMatrix(1.0f);
-        //平移矩阵，右乘
-        _modelMatrix = glm::translate(_modelMatrix, modelVecs[i]);
-        //旋转矩阵，右乘
-        _modelMatrix = glm::rotate(_modelMatrix, glm::radians((float)glfwGetTime() * (i+1) * 10), glm::vec3(0.0f, 1.0f, 0.0f));
+        //传入物体材质属性
+        _shader_cube.setVec3("myMaterial.m_ambient", glm::vec3(0.1f));
+        _shader_cube.setVec3("myMaterial.m_diffuse", glm::vec3(0.7f));
+        _shader_cube.setVec3("myMaterial.m_specular", glm::vec3(0.8f));
+        _shader_cube.setFloat("myMaterial.m_shiness" , 32);
 
-        _shader.start();
-        _shader.setMatrix("_modelMatrix", _modelMatrix);
-        _shader.setMatrix("_viewMatrix", _camera.getMatrix());
-        _shader.setMatrix("_projMatrix", _projMatrix);
-        glBindVertexArray(VAO);
+        _shader_cube.setMatrix("_modelMatrix", _modelMatrix);
+        _shader_cube.setMatrix("_viewMatrix", _camera.getMatrix());
+        _shader_cube.setMatrix("_projMatrix", _projMatrix);
+        glBindVertexArray(VAO_cube);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        _shader.end();
-    }
+   _shader_cube.end();
+
+
+   _shader_sun.start(); 
+        _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
+        _shader_sun.setMatrix("_viewMatrix", _camera.getMatrix());
+        _shader_sun.setMatrix("_projMatrix", _projMatrix);
+
+        _modelMatrix = glm::mat4(1.0f);
+        _modelMatrix = glm::translate(_modelMatrix, light_pos);
+        _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
+        glBindVertexArray(VAO_sun);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+   _shader_cube.end();
+
 
     // _shader.start();
     // glBindVertexArray(VAO);
@@ -248,7 +241,11 @@ int main()
     _camera.lookAt(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f, 0.0f, -1.0f),glm::vec3(0.0f, 1.0f, 0.0f));
     _camera.setSpeed(0.005f);
 
-    initModel();
+    VAO_cube = createModel();
+    VAO_sun = createModel();
+    light_pos = glm::vec3(3.0f, 0.0f, -1.0f);
+    light_color = glm::vec3(1.0f, 1.0f, 1.0f);
+
     initTexture()
     initShader("vertexShader.glsl" , "fragmentShader.glsl");
 
