@@ -138,10 +138,15 @@ void initModel()
 
 void rend()
 {
+    glUseProgram(shaderProgram );
+    float _time=glfwGetTime();
+    float _green=sin(_time)*0.5f+0.5f;
+    int _locaiton=glGetUniformLocation(shaderProgram,"outColor");
+    glUniform4f(_location,0.0f,_green,0.0f,1.0f);''
 
     glBindVertexArray(VAO);
     //用哪个shader程序
-    glUseProgram(shaderProgram);
+    //glUseProgram(shaderProgram);
     //绘图模式、起始顶点，顶点数
     glDrawArrays(GL_TRIANGLES, 0, 3);
     //
