@@ -10,6 +10,8 @@ ffImage* _pImage=nullptr;
 unsigned int VBO = 0;
 //VAO index
 unsigned int VAO = 0;
+//Texture index
+unsigned int _texture = 0;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -24,7 +26,18 @@ void processInput(GLFWwindow* window)
 
 void initTexture()
 {
-    _pImage = ffImage::readFromFile("res/wall.jph");
+    _pImage = ffImage::readFromFile("res/flower.jpg");
+
+    glGenTextures(1, &_texture);
+    //绑定哪一种纹理
+    glBindTexture(GL_TEXTURE_2D, _texture);
+    //纹理采样属性方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //读取纹理
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _pImage->getWidth(), _pImage->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, _pImage->getData());
 }
 
 void	initShader(const char* _vertexPath, const char* _fragPath)
@@ -34,11 +47,13 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
 
 void initModel()
 {
-    float vertices[] = {
-    //顶点               //颜色 
-    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-     0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-     0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f
+    float vertices[] =
+    {
+        //顶点                //颜色                 //纹理
+        0.5f,  0.5f, 0.0f,    1.0f , 0.0f , 0.0f,   1.0f , 1.0f,
+        0.5f, -0.5f, 0.0f,    0.0f , 1.0f , 0.0f,   1.0f , 0.0f,
+        -0.5f,  -0.5f, 0.0f,  0.0f , 0.0f , 1.0f,   0.0f , 0.0f,
+        -0.5f, 0.5f, 0.0f,    0.0f , 1.0f , 0.0f,   0.0f , 1.0f,
     };
 
     unsigned int indices[] = {
@@ -63,19 +78,23 @@ void initModel()
     //（3）给VBO分配显存空间 传输数据
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     //（4）告诉shader数据解析方式
-    //顶点信息，跨度为6
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    //颜色信息，跨度为6
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(sizeof(float)*3));
+    //顶点信息，颜色信息，纹理信息，跨度为8
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float)*3));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 6));
     //（5）激活锚点
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
     //解绑VAO
     glBindVertexArray(0); 
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void rend()
 {
+    glBindTexture(GL_TEXTURE_2D, _texture);
+
     _shader.start();
     glBindVertexArray(VAO);
     //用哪个shader程序
@@ -127,8 +146,6 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
     glfwTerminate();
     return 0;
 }
