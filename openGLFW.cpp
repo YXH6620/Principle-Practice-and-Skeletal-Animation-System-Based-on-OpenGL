@@ -31,10 +31,21 @@ void initModel()
      0.0f,  0.5f, 0.0f, 1.0f, 0.0f, 1.0f
     };
 
+    unsigned int indices[] = {
+        0,1,3,
+        1,2,3
+    };
+
     //创建VAO
     glGenVertexArrays(1, &VAO);
     //绑定VAO，VBO此时属于VAO的管理范围，管理对应的VBO锚定点
     glBindVertexArray(VAO);
+
+    //构建EBO
+    unsigned int EBO=0;
+    glGenBuffers(1,&EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //（2）绑定VBO index
     glGenBuffers(1, &VBO);
@@ -60,7 +71,8 @@ void rend()
     //用哪个shader程序
     //glUseProgram(shaderProgram);
     //绘图模式、起始顶点，顶点数
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    //glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     _shader.end();
 }
 
