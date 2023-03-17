@@ -5,6 +5,7 @@
 #include<sstream>
 #include<string>
 
+//shader程序ID，后续直接调用使用
 unsigned int shaderProgram = 0;
 //1）获取VBO index
 unsigned int VBO = 0;
@@ -23,9 +24,10 @@ void processInput(GLFWwindow* window)
 void	initShader(const char* _vertexPath, const char* _fragPath)
 {
     shaderProgram = 0;
+    //shader代码
     std::string  _vertexCode("");
     std::string  _fragCode("");
-
+    //shader读取器
     std::ifstream	_vShaderFile;
     std::ifstream	_fShaderFile;
 
@@ -38,6 +40,7 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
         _vShaderFile.open(_vertexPath);
         _fShaderFile.open(_fragPath);
 
+        // 从读取器里读取shader
         std::stringstream	_vShaderStream, _fShaderStream;
         _vShaderStream << _vShaderFile.rdbuf();
         _fShaderStream << _fShaderFile.rdbuf();
@@ -45,6 +48,7 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
         _vShaderFile.close();
         _fShaderFile.close();
 
+        //得到代码
         _vertexCode = _vShaderStream.str();
         _fragCode = _fShaderStream.str();
     }
@@ -58,15 +62,15 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
     const char* _vShaderStr = _vertexCode.c_str();
     const char* _fShaderStr = _fragCode.c_str();
 
+    //shader的编译链接、记录编译bug信息
     unsigned int	_vertexID = 0, _fragID = 0;
     char	_infoLog[512];
     int		_successFlag;
 
-    //创建顶点shader
+    //创建vertex shader、传入代码、编译shader、获取编译信息
     _vertexID = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(_vertexID, 1, &_vShaderStr, NULL);
     glCompileShader(_vertexID);
-
     glGetShaderiv(_vertexID, GL_COMPILE_STATUS, &_successFlag);
     if (!_successFlag)
     {
@@ -75,11 +79,10 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
         std::cout << errStr << std::endl;
     }
 
-    //创建着色shader
+    //创建fragment shader、传入代码、编译shader、获取编译信息
     _fragID = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(_fragID, 1, &_fShaderStr, NULL);
     glCompileShader(_fragID);
-
     glGetShaderiv(_fragID, GL_COMPILE_STATUS, &_successFlag);
     if (!_successFlag)
     {
@@ -88,12 +91,11 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
         std::cout << errStr << std::endl;
     }
 
-    //创建shader程序
+    //创建shader程序、链接shader程序、链接编译完的程序、获取编译信息
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, _vertexID);
     glAttachShader(shaderProgram, _fragID);
     glLinkProgram(shaderProgram);
-
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &_successFlag);
     if (!_successFlag)
     {
@@ -101,6 +103,8 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
         std::string errStr(_infoLog);
         std::cout << errStr << std::endl;
     }
+
+    //shader结束 删除中间状态
     glDeleteShader(_vertexID);
     glDeleteShader(_fragID);
 }
