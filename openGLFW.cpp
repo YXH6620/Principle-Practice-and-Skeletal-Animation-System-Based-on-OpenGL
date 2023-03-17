@@ -9,6 +9,7 @@
 unsigned int shaderProgram = 0;
 //1）获取VBO index
 unsigned int VBO = 0;
+//VAO index
 unsigned int VAO = 0;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -115,7 +116,10 @@ void initModel()
      0.5f, -0.5f, 0.0f,
      0.0f,  0.5f, 0.0f
     };
+
+    //创建VAO
     glGenVertexArrays(1, &VAO);
+    //绑定VAO，VBO此时属于VAO的管理范围，管理对应的VBO锚定点
     glBindVertexArray(VAO);
 
     //（2）绑定VBO index
@@ -127,14 +131,20 @@ void initModel()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     //（5）激活锚点
     glEnableVertexAttribArray(0);
+
+    //解绑VAO
     glBindVertexArray(0); 
 }
 
 void rend()
 {
+
     glBindVertexArray(VAO);
+    //用哪个shader程序
     glUseProgram(shaderProgram);
+    //绘图模式、起始顶点，顶点数
     glDrawArrays(GL_TRIANGLES, 0, 3);
+    //
     glUseProgram(0);
 }
 
