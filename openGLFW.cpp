@@ -1,6 +1,7 @@
 ﻿#include "Base.h"
 #include "Shader.h"
 #include "ffImage.h"
+#include "Camera.h"
 
 //Shader
 Shader _shader;
@@ -13,7 +14,8 @@ unsigned int VAO = 0;
 //Texture index
 unsigned int _texture = 0;
 
-glm::mat4 _viewMatrix(1.0f);
+Camera _camera;
+
 glm::mat4 _projMatrix(1.0f);
 int       _width = 800;
 int       _height = 600;
@@ -27,6 +29,28 @@ void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        _camera.move(CAMERA_MOVE::MOVE_FRONT);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        _camera.move(CAMERA_MOVE::MOVE_BACK);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        _camera.move(CAMERA_MOVE::MOVE_LEFT);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        _camera.move(CAMERA_MOVE::MOVE_RIGHT);
+    }
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    _camera.onMouseMove(xpos, ypos);
 }
 
 void initTexture()
@@ -158,8 +182,8 @@ void rend()
         glm::vec3(1.5f,  0.2f, -1.5f),
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
-    //摄像机矩阵
-    _viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+   
+    _camera.update();
     //投影矩阵
     _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 100.0f);
 
@@ -175,7 +199,7 @@ void rend()
 
         _shader.start();
         _shader.setMatrix("_modelMatrix", _modelMatrix);
-        _shader.setMatrix("_viewMatrix", _viewMatrix);
+        _shader.setMatrix("_viewMatrix", _camera.getMatrix());
         _shader.setMatrix("_projMatrix", _projMatrix);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -214,8 +238,15 @@ int main()
         return -1;
     }
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, _width, _height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    
+    //取消光标
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
+    _camera.lookAt(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f, 0.0f, -1.0f),glm::vec3(0.0f, 1.0f, 0.0f));
+    _camera.setSpeed(0.005f);
 
     initModel();
     initTexture()
