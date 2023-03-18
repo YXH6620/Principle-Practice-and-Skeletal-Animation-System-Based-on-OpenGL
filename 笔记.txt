@@ -89,6 +89,13 @@
 	（1）加速手段，定义前后里外，剔除看不见的面。
 	（2）根据顶点绘制顺序，逆时针和顺时针区分正反
 
+13.FrameBuffer：
+	（1）帧缓存不是一块显存，是一个类似VAO的组织架构，包含很多附件（ColorBuffer、DepthBuffer、StencilBuffer等	）
+	（2）一般我们都是默认用0号帧缓存进行渲染
+	（3）后处理，离屏渲染
+	（4）原则：至少绑定一个附件、至少有一个ColorBUffer、每个绑定的附件必须开辟内存、每个绑定的附件必须有相同的采样标准
+	（5）各类buffer实现方法：①Texture；②RenerBuffer，独特的存储结构和流水线结构；③混合使用
+	（6）FrameBuffer渲染流程：first pass（渲染至ColorBuffer）、second pass（后处理）
 
 
 	
