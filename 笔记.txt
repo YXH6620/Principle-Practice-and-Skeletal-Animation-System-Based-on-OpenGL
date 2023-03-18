@@ -98,5 +98,14 @@
 	（6）FrameBuffer渲染流程：first pass（渲染至ColorBuffer）、second pass（后处理）
 	（7）后处理：利用FrameBuffer特性，渲染到ColorBuffer组件，然后对渲染后Texture进行后处理
 
-
-	
+14.CubeMap：
+	（1）每一组CubeMap包含了六个贴图、通过xyz向量进行图素访问、具有特殊纹理类型GL_TEXTURE_CUBE_MAP
+	（2）天空盒：
+		①设置一个正方体VAO，方向都是-1到1，质心在原点
+		②做一个CubeMap的Texture为六个面都设置目标贴图
+		③在正方体VertexShader中把坐标直接传给FragmentShader（插值后结果），去掉摄像机矩阵对平移的影响
+		④在FragmentShader中利用坐标来做STR坐标，采样CubeMap给到outFrag
+		⑤每次必须先绘制天空盒
+	（3）天空盒优化：
+		将天空盒深度做到最深，在每次设置gl_Position时，将其设置为pos.xyww，这样在之后投影变换后z值除以w变为1，即恒为1，最大深度值。
+	（4）环境贴图：反射、采样CubeMap像素
