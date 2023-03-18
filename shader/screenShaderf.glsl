@@ -6,13 +6,13 @@ in vec3 outFragPos;
 
 uniform sampler2D  ourTexture;
 
-
+//卷积-锐化
 float kernelSharp[9] = float[](
         -1, -1, -1,
         -1,  9, -1,
         -1, -1, -1
     );
-
+//卷积-模糊
 float kernelBlur[9] = float[](
     1.0 / 16, 2.0 / 16, 1.0 / 16,
     2.0 / 16, 4.0 / 16, 2.0 / 16,
