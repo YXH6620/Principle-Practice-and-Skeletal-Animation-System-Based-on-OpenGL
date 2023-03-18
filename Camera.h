@@ -52,6 +52,7 @@ public:
 
 	glm::mat4 getMatrix();
 	glm::vec3 getPosition();
+	glm::vec3 getDirection();
 
 	void	setSpeed(float _speed)
 	{

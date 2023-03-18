@@ -11,11 +11,15 @@ glm::vec3 light_color(1.0f);
 //Shader
 Shader          _shader_cube;
 Shader          _shader_sun;
+Shader          _shader_dir;//平行光
+Shader          _shader_point;//点光源
+Shader          _shader_spot;//聚光灯
 //Texture
 ffImage* _pImage=nullptr;
 
-//Texture index
-unsigned int _texture = 0;
+//光照贴图
+uint            _textureBox = 0;
+uint            _textureSpec = 0;
 
 Camera _camera;
 
@@ -56,9 +60,10 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     _camera.onMouseMove(xpos, ypos);
 }
 
-void initTexture()
+uint createTexture(const char* _fileName)
 {
     _pImage = ffImage::readFromFile("res/flower.jpg");
+    uint _texture = 0;
 
     glGenTextures(1, &_texture);
     //绑定哪一种纹理
@@ -70,12 +75,17 @@ void initTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     //读取纹理
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _pImage->getWidth(), _pImage->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, _pImage->getData());
+
+    return _texture;
 }
 
 void	initShader(const char* _vertexPath, const char* _fragPath)
 {
     _shader_cube.initShader(_vertexPath, _fragPath);
-    _shader_sun.initShader("vsunShader.glsl", "fsunShader.glsl");
+    _shader_sun.initShader("shader/vsunShader.glsl", "shader/fsunShader.glsl");
+    _shader_dir.initShader("shader/dirShaderv.glsl", "shader/dirShaderf.glsl");
+    _shader_point.initShader("shader/pointShaderv.glsl", "shader/pointShaderf.glsl");
+    _shader_spot.initShader("shader/spotShaderv.glsl", "shader/spotShaderf.glsl");
 }
 
 uint createModel()
@@ -150,43 +160,78 @@ uint createModel()
 
 void rend()
 {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     //清理深度缓存
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //开启深度检测
     glEnable(GL_DEPTH_TEST);
 
 
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f,  0.0f,  0.0f),
+        glm::vec3(2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f,  2.0f, -2.5f),
+        glm::vec3(1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
+
+
     _camera.update();
     _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 100.0f);
     glm::mat4 _modelMatrix(1.0f);
     _modelMatrix = glm::translate(_modelMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
-    glBindTexture(GL_TEXTURE_2D, _texture);
-    _shader_cube.start();
-        _shader_cube.setVec3("view_pos", _camera.getPosition());
+
+    //激活当前texture编号
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _textureBox);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _textureSpec);
+
+    _shader_spot.start();
+        _shader_spot.setVec3("view_pos", _camera.getPosition());
         
         //传入光照属性
-        light_color = glm::vec3((float)glfwGetTime() * 0.8f, (float)glfwGetTime() * 0.5f, (float)glfwGetTime() * 0.7f);
-        _shader_cube.setVec3("myLight.m_ambient" , light_color * glm::vec3(0.1f));
-        _shader_cube.setVec3("myLight.m_diffuse", light_color * glm::vec3(0.7f));
-        _shader_cube.setVec3("myLight.m_specular", light_color * glm::vec3(0.5f));
-        _shader_cube.setVec3("myLight.m_pos", light_pos);
+        _shader_spot.setVec3("myLight.m_ambient" , light_color * glm::vec3(0.1f));
+        _shader_spot.setVec3("myLight.m_diffuse", light_color * glm::vec3(0.9f));
+        _shader_spot.setVec3("myLight.m_specular", light_color * glm::vec3(0.9f));
+
+        _shader_spot.setVec3("myLight.m_pos", _camera.getPosition());
+        _shader_spot.setVec3("myLight.m_direction", _camera.getDirection());
+        _shader_spot.setFloat("myLight.m_cutOff", glm::cos(glm::radians(12.5f)));
+        _shader_spot.setFloat("myLight.m_outCutOff", glm::cos(glm::radians(20.5f)));
+
+        _shader_spot.setFloat("myLight.m_c", 1.0f);
+        _shader_spot.setFloat("myLight.m_l", 0.07f);
+        _shader_spot.setFloat("myLight.m_q", 0.017f);
 
         //传入物体材质属性
-        _shader_cube.setVec3("myMaterial.m_ambient", glm::vec3(0.1f));
-        _shader_cube.setVec3("myMaterial.m_diffuse", glm::vec3(0.7f));
-        _shader_cube.setVec3("myMaterial.m_specular", glm::vec3(0.8f));
-        _shader_cube.setFloat("myMaterial.m_shiness" , 32);
+        _shader_spot.setInt("myMaterial.m_specular", 1);
+        _shader_spot.setFloat("myMaterial.m_shiness" , 32);
+    
+        _shader_spot.setMatrix("_viewMatrix", _camera.getMatrix());
+        _shader_spot.setMatrix("_projMatrix", _projMatrix);
 
-        _shader_cube.setMatrix("_modelMatrix", _modelMatrix);
-        _shader_cube.setMatrix("_viewMatrix", _camera.getMatrix());
-        _shader_cube.setMatrix("_projMatrix", _projMatrix);
-        glBindVertexArray(VAO_cube);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-   _shader_cube.end();
+        for (int i = 0; i < 10; i++)
+        {
+            _modelMatrix = glm::mat4(1.0f);
+            _modelMatrix = glm::translate(_modelMatrix, cubePositions[i]);
+            _modelMatrix = glm::rotate(_modelMatrix, glm::radians(i * 20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            _shader_spot.setMatrix("_modelMatrix", _modelMatrix);
+            glBindVertexArray(VAO_cube);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        }
+        
+    _shader_spot.end();
 
 
-   _shader_sun.start(); 
+    _shader_sun.start(); 
         _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
         _shader_sun.setMatrix("_viewMatrix", _camera.getMatrix());
         _shader_sun.setMatrix("_projMatrix", _projMatrix);
@@ -196,17 +241,7 @@ void rend()
         _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
         glBindVertexArray(VAO_sun);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-   _shader_cube.end();
-
-
-    // _shader.start();
-    // glBindVertexArray(VAO);
-    // //用哪个shader程序
-    // //glUseProgram(shaderProgram);
-    // //绘图模式、起始顶点，顶点数
-    // //glDrawArrays(GL_TRIANGLES, 0, 3);
-    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    // _shader.end();
+    _shader_sun.end();
 }
 
 int main()
@@ -243,11 +278,12 @@ int main()
 
     VAO_cube = createModel();
     VAO_sun = createModel();
-    light_pos = glm::vec3(3.0f, 0.0f, -1.0f);
+    light_pos = glm::vec3(2.0f, 0.0f, 0.0f);
     light_color = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    initTexture()
-    initShader("vertexShader.glsl" , "fragmentShader.glsl");
+    _textureBox = createTexture("res/box.png");
+    _textureSpec = createTexture("res/specular.png");
+    initShader("shader/vertexShader.glsl", "shader/fragmentShader.glsl");
 
     while (!glfwWindowShouldClose(window))
     {
