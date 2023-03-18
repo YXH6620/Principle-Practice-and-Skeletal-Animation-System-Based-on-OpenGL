@@ -11,6 +11,8 @@ glm::vec3 light_color(1.0f);
 //Shader
 Shader          _shader_sun;
 Shader          _shader_scene;
+Shader          _shader_color;
+
 //Texture
 ffImage* _pImage=nullptr;
 
@@ -80,6 +82,7 @@ void	initShader(const char* _vertexPath, const char* _fragPath)
 {
     _shader_sun.initShader("shader/vsunShader.glsl", "shader/fsunShader.glsl");
     _shader_scene.initShader("shader/sceneShaderv.glsl", "shader/sceneShaderf.glsl");
+    _shader_color.initShader("shader/colorShaderv.glsl", "shader/colorShaderf.glsl");
 }
 
 uint createModel()
@@ -154,11 +157,15 @@ uint createModel()
 
 void rend()
 {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    //清理深度缓存
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //开启深度检测
     glEnable(GL_DEPTH_TEST);
+    //开始模板测试
+    glEnable(GL_STENCIL_TEST);
+    glStencilMask(0xFF);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //清理深度缓存
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
     glm::vec3 cubePositions[] = {
@@ -181,6 +188,7 @@ void rend()
         glm::vec3(0.0f,  0.0f, -3.0f)
     };
 
+    
     _camera.update();
     _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 100.0f);
     glm::mat4 _modelMatrix(1.0f);
@@ -253,6 +261,15 @@ void rend()
 
         for (int i = 0; i < 10; i++)
         {
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            //禁止写入
+            glStencilMask(0x00);
+            if (i == 4)
+            {
+                glStencilFunc(GL_ALWAYS, 1, 0xFF);
+                glStencilMask(0xFF);
+                glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+            }
             _modelMatrix = glm::mat4(1.0f);
             _modelMatrix = glm::translate(_modelMatrix, cubePositions[i]);
             _modelMatrix = glm::rotate(_modelMatrix, glm::radians(i * 20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -260,19 +277,42 @@ void rend()
             _shader_scene.setMatrix("_modelMatrix", _modelMatrix);
             glBindVertexArray(VAO_cube);
             glDrawArrays(GL_TRIANGLES, 0, 36);
-
         }
         
     _shader_scene.end();
 
 
 
+   _shader_color.start();
+        _shader_color.setMatrix("_viewMatrix", _camera.getMatrix());
+        _shader_color.setMatrix("_projMatrix", _projMatrix);
+
+        for (int i = 0; i < 10; i++)
+        {
+            glStencilFunc(GL_NEVER, 1, 0xFF);
+            glStencilMask(0x00);
+            if (i == 4)
+            {
+                glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            }
+            _modelMatrix = glm::mat4(1.0f);
+            _modelMatrix = glm::translate(_modelMatrix, cubePositions[i]);
+            _modelMatrix = glm::rotate(_modelMatrix, glm::radians(i * 20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            _modelMatrix = glm::scale(_modelMatrix, glm::vec3(1.1f, 1.1f, 1.1f));
+
+            _shader_color.setMatrix("_modelMatrix", _modelMatrix);
+            glBindVertexArray(VAO_cube);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    _shader_color.end();
+
+
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    //////缁樺埗澶槼
     _shader_sun.start(); 
-        _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
         _shader_sun.setMatrix("_viewMatrix", _camera.getMatrix());
         _shader_sun.setMatrix("_projMatrix", _projMatrix);
 
-        _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
         for (int i = 0; i < 4; i++)
         {
             _modelMatrix = glm::mat4(1.0f);
@@ -282,8 +322,8 @@ void rend()
             glBindVertexArray(VAO_sun);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-   
-    _shader_sun.end();
+    
+   _shader_sun.end();
 }
 
 int main()
@@ -316,7 +356,7 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
 
     _camera.lookAt(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f, 0.0f, -1.0f),glm::vec3(0.0f, 1.0f, 0.0f));
-    _camera.setSpeed(0.005f);
+    _camera.setSpeed(0.001f);
 
     VAO_cube = createModel();
     VAO_sun = createModel();

@@ -45,3 +45,40 @@
 	（1）作为材质系数，省去光照计算
 	（2）不同材质的表达，铁皮与木质
 	（3）用贴图代替光照材质中的specular diffuse等参数
+
+9.深度缓冲
+	（1）输出在屏幕上的是每个Fragment着色后的像素值
+	（2）每个Fragment都有MVP变换后的xyz，xy为NDC坐标，z就是-z轴深度值
+	（3）深度值越大 离摄像机越远
+	（4）记录深度值，比较
+	（5）深度缓冲Buffer：初始化为MAX，取min，绘制min的Fragment
+	（6）深度值zFighting：两个平面太接近，深度值无法有足够的精度，产生前后重叠效应。需要避免两模型太近或增加z-Buffer的精度到32位
+	（7）模板测试缓存（遮罩）：
+
+10.模板缓存（Stencil buffer）：
+	（1）启用模板缓存写入功能
+	（2）通过渲染物体对每个 Fragment对应的点进行模板数据写入
+	（3）关闭模板缓存写入功能
+	（4）渲染其他物体，但本次渲染是通过模板测试
+	（5）glStencilFunc：①什么情况下通过模板测试；②对比的数据对象；③对比之前所有缓存内数据都要与对比数据&&
+	（6）glStencilOp：①sfail：如果本Fragment模板测试没通过；②dpfail：如果本Fragment模板测试通过，深度测试没通过；③dppass：如果本Fragment都通过了
+	（7）高光边缘（描边）：
+		glStencilFunc(GL_ALWAYS, 1.0f, 0xFF);
+		glStencilMask(0xFF);
+		glStencilOp（GL_KEEP , GL_KEEP,GL_REPLACE
+
+		采用正常的Shader
+		渲染需要高光的物体
+
+		glStencilFunc(GL_NOTEQUAL,1, 0xFF);
+		glStencilMask(0x00);
+
+		采用单色Shader
+		将物体缩放1.05大小
+		渲染需要高光的物体
+
+		//重置
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+
+	
