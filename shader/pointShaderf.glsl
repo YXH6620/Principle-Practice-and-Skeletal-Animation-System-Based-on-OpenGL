@@ -21,7 +21,7 @@ struct Light
     vec3 m_ambient;
     vec3 m_diffuse;
     vec3 m_specular;
-    //三个衰减系数项
+
     float m_c;
     float m_l;
     float m_q;
@@ -35,8 +35,8 @@ uniform vec3 view_pos;
 
 void main()
 {
-    float dist = length(myLight.m_pos - outFragPos);//长度
-    float attenuation = 1.0f / (myLight.m_c + myLight.m_l * dist + myLight.m_q *dist * dist);//衰减
+    float dist = length(myLight.m_pos - outFragPos);
+    float attenuation = 1.0f / (myLight.m_c + myLight.m_l * dist + myLight.m_q *dist * dist);
 //环境光
     vec3 _ambient = myLight.m_ambient * vec3(texture(myMaterial.m_diffuse , outUV));
 

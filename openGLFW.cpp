@@ -9,11 +9,8 @@ glm::vec3 light_pos(1.0f);
 glm::vec3 light_color(1.0f);
 
 //Shader
-Shader          _shader_cube;
 Shader          _shader_sun;
-Shader          _shader_dir;//平行光
-Shader          _shader_point;//点光源
-Shader          _shader_spot;//聚光灯
+Shader          _shader_scene;
 //Texture
 ffImage* _pImage=nullptr;
 
@@ -81,11 +78,8 @@ uint createTexture(const char* _fileName)
 
 void	initShader(const char* _vertexPath, const char* _fragPath)
 {
-    _shader_cube.initShader(_vertexPath, _fragPath);
     _shader_sun.initShader("shader/vsunShader.glsl", "shader/fsunShader.glsl");
-    _shader_dir.initShader("shader/dirShaderv.glsl", "shader/dirShaderf.glsl");
-    _shader_point.initShader("shader/pointShaderv.glsl", "shader/pointShaderf.glsl");
-    _shader_spot.initShader("shader/spotShaderv.glsl", "shader/spotShaderf.glsl");
+    _shader_scene.initShader("shader/sceneShaderv.glsl", "shader/sceneShaderf.glsl");
 }
 
 uint createModel()
@@ -180,6 +174,12 @@ void rend()
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
+    glm::vec3 pointLightPositions[] = {
+        glm::vec3(0.7f,  0.2f,  2.0f),
+        glm::vec3(2.3f, -3.3f, -4.0f),
+        glm::vec3(-4.0f,  2.0f, -12.0f),
+        glm::vec3(0.0f,  0.0f, -3.0f)
+    };
 
     _camera.update();
     _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 100.0f);
@@ -192,29 +192,64 @@ void rend()
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _textureSpec);
 
-    _shader_spot.start();
-        _shader_spot.setVec3("view_pos", _camera.getPosition());
-        
-        //传入光照属性
-        _shader_spot.setVec3("myLight.m_ambient" , light_color * glm::vec3(0.1f));
-        _shader_spot.setVec3("myLight.m_diffuse", light_color * glm::vec3(0.9f));
-        _shader_spot.setVec3("myLight.m_specular", light_color * glm::vec3(0.9f));
-
-        _shader_spot.setVec3("myLight.m_pos", _camera.getPosition());
-        _shader_spot.setVec3("myLight.m_direction", _camera.getDirection());
-        _shader_spot.setFloat("myLight.m_cutOff", glm::cos(glm::radians(12.5f)));
-        _shader_spot.setFloat("myLight.m_outCutOff", glm::cos(glm::radians(20.5f)));
-
-        _shader_spot.setFloat("myLight.m_c", 1.0f);
-        _shader_spot.setFloat("myLight.m_l", 0.07f);
-        _shader_spot.setFloat("myLight.m_q", 0.017f);
-
-        //传入物体材质属性
-        _shader_spot.setInt("myMaterial.m_specular", 1);
-        _shader_spot.setFloat("myMaterial.m_shiness" , 32);
+    _shader_scene.start();
+        _shader_scene.setVec3("view_pos", _camera.getPosition());
     
-        _shader_spot.setMatrix("_viewMatrix", _camera.getMatrix());
-        _shader_spot.setMatrix("_projMatrix", _projMatrix);
+        //传入材质属性
+        _shader_scene.setInt("myMaterial.m_specular", 1);
+        _shader_scene.setFloat("myMaterial.m_shiness" , 32);
+    
+        _shader_scene.setMatrix("_viewMatrix", _camera.getMatrix());
+        _shader_scene.setMatrix("_projMatrix", _projMatrix);
+
+        // directional light
+        _shader_scene.setVec3("_dirLight.m_direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+        _shader_scene.setVec3("_dirLight.m_ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+        _shader_scene.setVec3("_dirLight.m_diffuse", glm::vec3(0.4f, 0.4f, 0.4f));
+        _shader_scene.setVec3("_dirLight.m_specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        // point light 1
+        _shader_scene.setVec3("_pointLight[0].m_pos", pointLightPositions[0]);
+        _shader_scene.setVec3("_pointLight[0].m_ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+        _shader_scene.setVec3("_pointLight[0].m_diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+        _shader_scene.setVec3("_pointLight[0].m_specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        _shader_scene.setFloat("_pointLight[0].m_c", 1.0f);
+        _shader_scene.setFloat("_pointLight[0].m_l", 0.09);
+        _shader_scene.setFloat("_pointLight[0].m_q", 0.032);
+        // point light 2
+        _shader_scene.setVec3("_pointLight[1].m_pos", pointLightPositions[1]);
+        _shader_scene.setVec3("_pointLight[1].m_ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+        _shader_scene.setVec3("_pointLight[1].m_diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+        _shader_scene.setVec3("_pointLight[1].m_specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        _shader_scene.setFloat("_pointLight[1].m_c", 1.0f);
+        _shader_scene.setFloat("_pointLight[1].m_l", 0.09);
+        _shader_scene.setFloat("_pointLight[1].m_q", 0.032);
+        // point light 3
+        _shader_scene.setVec3("_pointLight[2].m_pos", pointLightPositions[2]);
+        _shader_scene.setVec3("_pointLight[2].m_ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+        _shader_scene.setVec3("_pointLight[2].m_diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+        _shader_scene.setVec3("_pointLight[2].m_specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        _shader_scene.setFloat("_pointLight[2].m_c", 1.0f);
+        _shader_scene.setFloat("_pointLight[2].m_l", 0.09);
+        _shader_scene.setFloat("_pointLight[2].m_q", 0.032);
+        // point light 4
+        _shader_scene.setVec3("_pointLight[3].m_pos", pointLightPositions[3]);
+        _shader_scene.setVec3("_pointLight[3].m_ambient", glm::vec3(0.05f, 0.05f, 0.05f));
+        _shader_scene.setVec3("_pointLight[3].m_diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+        _shader_scene.setVec3("_pointLight[3].m_specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        _shader_scene.setFloat("_pointLight[3].m_c", 1.0f);
+        _shader_scene.setFloat("_pointLight[3].m_l", 0.09);
+        _shader_scene.setFloat("_pointLight[3].m_q", 0.032);
+        // spotLight
+        _shader_scene.setVec3("_spotLight.m_pos", _camera.getPosition());
+        _shader_scene.setVec3("_spotLight.m_direction", _camera.getDirection());
+        _shader_scene.setVec3("_spotLight.m_ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+        _shader_scene.setVec3("_spotLight.m_diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+        _shader_scene.setVec3("_spotLight.m_specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        _shader_scene.setFloat("_spotLight.m_c", 1.0f);
+        _shader_scene.setFloat("_spotLight.m_l", 0.09);
+        _shader_scene.setFloat("_spotLight.m_q", 0.032);
+        _shader_scene.setFloat("_spotLight.m_cutOff", glm::cos(glm::radians(12.5f)));
+        _shader_scene.setFloat("_spotLight.m_outCutOff", glm::cos(glm::radians(15.0f)));
 
         for (int i = 0; i < 10; i++)
         {
@@ -222,13 +257,14 @@ void rend()
             _modelMatrix = glm::translate(_modelMatrix, cubePositions[i]);
             _modelMatrix = glm::rotate(_modelMatrix, glm::radians(i * 20.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            _shader_spot.setMatrix("_modelMatrix", _modelMatrix);
+            _shader_scene.setMatrix("_modelMatrix", _modelMatrix);
             glBindVertexArray(VAO_cube);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
         }
         
-    _shader_spot.end();
+    _shader_scene.end();
+
 
 
     _shader_sun.start(); 
@@ -236,11 +272,17 @@ void rend()
         _shader_sun.setMatrix("_viewMatrix", _camera.getMatrix());
         _shader_sun.setMatrix("_projMatrix", _projMatrix);
 
-        _modelMatrix = glm::mat4(1.0f);
-        _modelMatrix = glm::translate(_modelMatrix, light_pos);
         _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
-        glBindVertexArray(VAO_sun);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (int i = 0; i < 4; i++)
+        {
+            _modelMatrix = glm::mat4(1.0f);
+            _modelMatrix = glm::translate(_modelMatrix, pointLightPositions[i]);
+            _modelMatrix = glm::scale(_modelMatrix, glm::vec3(0.2f, 0.2f, 0.2f));
+            _shader_sun.setMatrix("_modelMatrix", _modelMatrix);
+            glBindVertexArray(VAO_sun);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+   
     _shader_sun.end();
 }
 

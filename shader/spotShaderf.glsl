@@ -19,7 +19,7 @@ struct Light
 {
     vec3 m_pos;
     vec3 m_direction;
-    float m_cutOff;//cos值
+    float m_cutOff;
     float m_outCutOff;
 
     vec3 m_ambient;
@@ -43,7 +43,7 @@ void main()
     vec3 _lightDir = normalize(myLight.m_pos - outFragPos);
     vec3 _spotDir= normalize(myLight.m_direction);
     float cosTheta = dot(_lightDir , -_spotDir);
-    float epsilon = myLight.m_cutOff - myLight.m_outCutOff;//外围角，cos反比
+    float epsilon = myLight.m_cutOff - myLight.m_outCutOff;
     float intensity = clamp((cosTheta - myLight.m_outCutOff) / epsilon , 0.0f , 1.0f);
 
 //长度衰减系数
