@@ -108,4 +108,28 @@
 		⑤每次必须先绘制天空盒
 	（3）天空盒优化：
 		将天空盒深度做到最深，在每次设置gl_Position时，将其设置为pos.xyww，这样在之后投影变换后z值除以w变为1，即恒为1，最大深度值。
-	（4）环境贴图：反射、采样CubeMap像素
+	（4）环境贴图：反射、采样CubeMap像素；折射、折射率n=c/v
+
+15.数据灵活处理：
+	（1）Buffer（VBO）定点数据拷贝
+		①glBufferSubData，但多次修改数据会造成性能浪费，因为每次都要从内存copy到显存
+		②glBufferMap，虚拟指针，一气呵成
+	（2）不同数据打包方式
+		①以前pos-uv-normal混合，现在可以各自独立数组①glBufferSubData，
+	（3）不同Buffer之间copy数据
+		①glCopyBuffeSubData
+
+16.更多GLSL内建变量、高级GLSL
+	（1）gl_PointSize：用来改变绘制点大小
+	（2）gl_VertexID：获取当前正在执行顶点的ID
+	（3）gl_FragCoord“Fragment的xyz
+	（4）gl_FrontFacing：判断Fragment是正面还是反面
+	（5）gl_FragDepth：Fragment深度，在Fragment Shader之后
+	（6）接口数据块Blocks；类似struct
+	（7）全局数据块Uniform Buffer Object：频繁调用的shader，利用UBO进行不同Shader数据共享
+
+17.Geometry Shader：
+	（1）对装配后的顶点组，进行生成或减除操作
+	（2）法向量可视化，点+法向量长度，两点成线段输出
+	（3）
+	
