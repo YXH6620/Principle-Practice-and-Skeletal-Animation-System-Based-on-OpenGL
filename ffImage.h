@@ -48,5 +48,6 @@ public:
 
 public:
 	static ffImage* readFromFile(const char* _fileName);
+	static ffImage* readFromMemory(unsigned char* _data , uint _width , uint _height);
 };
 

@@ -14,8 +14,7 @@ public:
 	{
 
 	}
-	void initShader(const char* _vertexPath, const char* _fragPath , const char* _geoPath = NULL);
-	uint compileShader(const char* _shaderPath , GLint _shaderType);
+	void initShader(const char* _vertexPath, const char* _fragPath);
 	void start()
 	{
 		glUseProgram(m_shaderProgram);

@@ -1,25 +1,66 @@
-﻿#include "Base.h"
-#include "Shader.h"
-#include "ffImage.h"
-#include "Camera.h"
+﻿#include"Base.h"
+#include"Shader.h"
+#include"ffImage.h"
+#include"Camera.h"
+#include"ffModel.h"
 
-uint VAO_cube = 0;
+uint _texid = 0;
+float _lastTime = 0;
 
-//Shader
 Shader          _shader;
-Shader          _shader_geo;
+FF::ffModel*    _model;
 
-//Texture
-ffImage* _pImage=nullptr;
 
-uint            _textureBox = 0;
-uint            _textureWindow = 0;
-
-Camera _camera;
+Camera          _camera;
 
 glm::mat4 _projMatrix(1.0f);
 int       _width = 800;
 int       _height = 600;
+
+void rend()
+{
+    float _currentTime = glfwGetTime();
+    float _deltaTime = _currentTime - _lastTime;
+    _lastTime = _currentTime;
+
+    glClearColor(0.4f, 0.8f, 0.5f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
+
+    _camera.update();
+    _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 1000.0f);
+    glm::mat4 _modelMatrix(1.0f);
+    _modelMatrix = glm::translate(_modelMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
+    _modelMatrix = glm::scale(_modelMatrix, glm::vec3(0.01));
+
+    _shader.start();
+    _shader.setMatrix("_modelMatrix", _modelMatrix);
+    _shader.setMatrix("_viewMatrix", _camera.getMatrix());
+    _shader.setMatrix("_projMatrix", _projMatrix);
+    _shader.setFloat("myMaterial.m_shiness", 32.0f);
+    _shader.setVec3("view_pos", _camera.getPosition());
+
+    
+    _shader.setVec3("myLight.m_pos", glm::vec3(0.0f , 1.0f , 1.0f));
+    _shader.setVec3("myLight.m_ambient", glm::vec3(0.2f , 0.2f , 0.2f));
+    _shader.setVec3("myLight.m_diffuse", glm::vec3(1.0f , 1.0f , 1.0f));
+    _shader.setVec3("myLight.m_specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    _shader.setFloat("myLight.c", 1.0f);
+    _shader.setFloat("myLight.l", 0.09f);
+    _shader.setFloat("myLight.q", 0.032f);
+    
+    _model->update(_deltaTime);
+    _model->draw(_shader);
+
+    _shader.end();
+}
+
+void initShader()
+{
+    _shader.initShader("shader/vPointShader.glsl", "shader/fPointShader.glsl");
+}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -54,232 +95,17 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     _camera.onMouseMove(xpos, ypos);
 }
 
-uint createTexture(const char* _fileName)
-{
-    _pImage = ffImage::readFromFile(_fileName);
-    uint _texture = 0;
-    glGenTextures(1, &_texture);
-    glBindTexture(GL_TEXTURE_2D, _texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _pImage->getWidth(), _pImage->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, _pImage->getData());
-    
-    return _texture;
-}
-
-void initShader()
-{
-    _shader.initShader("shader/vertexShader.glsl", "shader/fragmentShader.glsl");
-    _shader_geo.initShader("shader/geoShaderv.glsl", "shader/geoShaderf.glsl" , "shader/geoShaderg.glsl");
-}
-
-uint createModel()
-{
-    uint _VAO = 0;
-    uint _VBO = 0;
-
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,           0.0f,  0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,           0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,           0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,           0.0f,  0.0f, -1.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,           0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,           0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,           0.0f,  0.0f,  1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,           0.0f,  0.0f,  1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           0.0f,  0.0f,  1.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           -1.0f,  0.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           -1.0f,  0.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           -1.0f,  0.0f,  0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           1.0f,  0.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           1.0f,  0.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           1.0f,  0.0f,  0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,           0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,           0.0f, -1.0f,  0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,           0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,           0.0f, -1.0f,  0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,           0.0f, -1.0f,  0.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,           0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,           0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           0.0f,  1.0f,  0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,           0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,           0.0f,  1.0f,  0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,           0.0f,  1.0f,  0.0f,
-    };
-
-
-    glGenVertexArrays(1, &_VAO);
-    glBindVertexArray(_VAO);
-
-    glGenBuffers(1, &_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 3));
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 5));
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    return _VAO;
-}
-
-uint createScreenPlane()
-{
-    uint _VAO = 0;
-    uint _VBO = 0;
-    glGenVertexArrays(1, &_VAO);
-    glBindVertexArray(_VAO);
-
-    glGenBuffers(1, &_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-
-    float quadVertices[] = {
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-
-        -1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f
-    };
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
-    return _VAO;
-}
-
-uint createPlane()
-{
-    uint _VAO = 0;
-    uint _VBO = 0;
-    glGenVertexArrays(1, &_VAO);
-    glBindVertexArray(_VAO);
-
-    glGenBuffers(1, &_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-
-    float planeVertices[] = {
-         5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-        -5.0f, -0.5f,  5.0f,  0.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-
-         5.0f, -0.5f,  5.0f,  2.0f, 0.0f,
-        -5.0f, -0.5f, -5.0f,  0.0f, 2.0f,
-         5.0f, -0.5f, -5.0f,  2.0f, 2.0f
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    return _VAO;
-}
-
-uint createWindow()
-{
-    uint _VAO = 0;
-    uint _VBO = 0;
-    glGenVertexArrays(1, &_VAO);
-    glBindVertexArray(_VAO);
-
-    glGenBuffers(1, &_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-
-    float transparentVertices[] = {
-        0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-        0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
-        1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-
-        0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
-        1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
-        1.0f,  0.5f,  0.0f,  1.0f,  0.0f
-    };
-    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    return _VAO;
-}
-
-void rend()
-{
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glEnable(GL_DEPTH_TEST);
-
-    _camera.update();
-    _projMatrix = glm::perspective(glm::radians(45.0f), (float)_width / (float)_height, 0.1f, 100.0f);
-    glm::mat4 _modelMatrix(1.0f);
-    _modelMatrix = glm::translate(_modelMatrix, glm::vec3(0.0f, 0.0f, -3.0f));
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _textureBox);
-
-    _shader.start();
-        _shader.setMatrix("_modelMatrix", _modelMatrix);
-        _shader.setMatrix("_viewMatrix", _camera.getMatrix());
-        _shader.setMatrix("_projMatrix", _projMatrix);
-
-
-        //缁樺埗鏂圭洅
-        glBindVertexArray(VAO_cube);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-    
-    _shader.end();
-
-
-    //绘制法线
-    _shader_geo.start();
-        _shader_geo.setMatrix("_modelMatrix", _modelMatrix);
-        _shader_geo.setMatrix("_viewMatrix", _camera.getMatrix());
-        _shader_geo.setMatrix("_projMatrix", _projMatrix);
-
-        glBindVertexArray(VAO_cube);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-    _shader_geo.end();
-}
 
 int main()
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
 
-    GLFWwindow* window = glfwCreateWindow(_width, _height, "OpenGL Core", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Core", NULL, NULL);
+    glfwSetWindowPos(window, 600, 600);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -296,25 +122,20 @@ int main()
 
     glViewport(0, 0, _width, _height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
-    //取消光标
+
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    _camera.lookAt(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f, 0.0f, -1.0f),glm::vec3(0.0f, 1.0f, 0.0f));
-    _camera.setSpeed(0.001f);
-    
-    VAO_cube = createModel();
-
-    _textureBox = createTexture("res/box.png");
-    _textureWindow = createTexture("res/blend_window.png");
-
+    _camera.lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    _camera.setSpeed(0.05f);
+     
+    _model = new FF::ffModel("res/ren/test.fbx");
     initShader();
-
+ 
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
-
         rend();
 
         glfwSwapBuffers(window);

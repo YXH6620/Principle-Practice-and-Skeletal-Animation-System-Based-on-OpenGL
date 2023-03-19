@@ -1,0 +1,14 @@
+.vs/
+Assimp/
+Debug/
+Release/
+*.sln
+OpenGL.sln
+OpenGL.vcxproj
+OpenGL.vcxproj.filters
+OpenGL.vcxproj.user
+Release/
+dll/
+glad/
+glfw/
+x64/

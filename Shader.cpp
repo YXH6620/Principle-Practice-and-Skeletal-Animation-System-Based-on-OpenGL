@@ -1,29 +1,70 @@
 #include "Shader.h"
-void Shader::initShader(const char* _vertexPath, const char* _fragPath , const char* _geoPath)
+void Shader::initShader(const char* _vertexPath, const char* _fragPath)
 {
-    //shaderµÄ±àÒë
-    unsigned int   _vertexID = 0, _fragID = 0 , _geoID = 0;
-    _vertexID   = compileShader(_vertexPath ,   GL_VERTEX_SHADER);
-    _fragID     = compileShader(_fragPath ,     GL_FRAGMENT_SHADER);
-    _geoID      = compileShader(_geoPath ,      GL_GEOMETRY_SHADER);
+    std::string _vertexCode("");
+    std::string _fragCode("");
 
+    std::ifstream   _vShaderFile;
+    std::ifstream   _fShaderFile;
+
+    _vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    _fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+    try
+    {
+        _vShaderFile.open(_vertexPath);
+        _fShaderFile.open(_fragPath);
+
+        std::stringstream _vShaderStream, _fShaderStream;
+        _vShaderStream << _vShaderFile.rdbuf();
+        _fShaderStream << _fShaderFile.rdbuf();
+
+        _vertexCode = _vShaderStream.str();
+        _fragCode = _fShaderStream.str();
+    }
+    catch (std::ifstream::failure e)
+    {
+        std::string errStr = "read shader fail";
+        std::cout << errStr << std::endl;
+    }
+
+    const char* _vShaderStr = _vertexCode.c_str();
+    const char* _fShaderStr = _fragCode.c_str();
+
+    //shaderµÄ±àÒëÁ´½Ó
+    unsigned int   _vertexID = 0, _fragID = 0;
     char           _infoLog[512];
     int            _successFlag = 0;
 
+    //±àÒë
+    _vertexID = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(_vertexID, 1, &_vShaderStr, NULL);
+    glCompileShader(_vertexID);
+
+    glGetShaderiv(_vertexID, GL_COMPILE_STATUS, &_successFlag);
+    if (!_successFlag)
+    {
+        glGetShaderInfoLog(_vertexID, 512, NULL, _infoLog);
+        std::string errStr(_infoLog);
+        std::cout << _infoLog << std::endl;
+    }
+
+    _fragID = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(_fragID, 1, &_fShaderStr, NULL);
+    glCompileShader(_fragID);
+
+    glGetShaderiv(_fragID, GL_COMPILE_STATUS, &_successFlag);
+    if (!_successFlag)
+    {
+        glGetShaderInfoLog(_fragID, 512, NULL, _infoLog);
+        std::string errStr(_infoLog);
+        std::cout << _infoLog << std::endl;
+    }
+
     //Á´½Ó
     m_shaderProgram = glCreateProgram();
-    if (_vertexID != -1)
-    {
-        glAttachShader(m_shaderProgram, _vertexID);
-    }
-    if (_fragID != -1)
-    {
-        glAttachShader(m_shaderProgram, _fragID);
-    }
-    if (_geoID != -1)
-    {
-        glAttachShader(m_shaderProgram, _geoID);
-    }
+    glAttachShader(m_shaderProgram, _vertexID);
+    glAttachShader(m_shaderProgram, _fragID);
     glLinkProgram(m_shaderProgram);
 
     glGetProgramiv(m_shaderProgram, GL_LINK_STATUS, &_successFlag);
@@ -35,58 +76,6 @@ void Shader::initShader(const char* _vertexPath, const char* _fragPath , const c
     }
     glDeleteShader(_vertexID);
     glDeleteShader(_fragID);
-    glDeleteShader(_geoID);
-}
-
-
-uint Shader::compileShader(const char* _shaderPath, GLint _shaderType)
-{
-    if (_shaderPath == "" || _shaderPath == NULL)
-    {
-        return -1;
-    }
-
-    std::string     _shaderCode("");
-
-    std::ifstream   _shaderFile;
-
-    _shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-    try
-    {
-        _shaderFile.open(_shaderPath);
-
-        std::stringstream _shaderStream;
-        _shaderStream << _shaderFile.rdbuf();
-
-        _shaderCode = _shaderStream.str();
-    }
-    catch (std::ifstream::failure e)
-    {
-        std::string errStr = "read shader fail";
-        std::cout << errStr << std::endl;
-    }
-    const char* _shaderStr = _shaderCode.c_str();
-
-    //shaderµÄ±àÒëÁ´½Ó
-    unsigned int   _shaderID = 0;
-    char           _infoLog[512];
-    int            _successFlag = 0;
-
-    //±àÒë
-    _shaderID = glCreateShader(_shaderType);
-    glShaderSource(_shaderID, 1, &_shaderStr, NULL);
-    glCompileShader(_shaderID);
-
-    glGetShaderiv(_shaderID, GL_COMPILE_STATUS, &_successFlag);
-    if (!_successFlag)
-    {
-        glGetShaderInfoLog(_shaderID, 512, NULL, _infoLog);
-        std::string errStr(_infoLog);
-        std::cout << _infoLog << std::endl;
-    }
-
-    return _shaderID;
 }
 
 
